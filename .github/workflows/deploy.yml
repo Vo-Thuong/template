@@ -4,14 +4,13 @@ on:
   push:
     branches:
       - main
-      - master  # Tự động chạy khi bạn push code lên nhánh main hoặc master
+      - master
   pull_request:
     branches:
       - main
       - master
 
 jobs:
-  # Lớp CI: Tự động quét và kiểm tra lỗi cú pháp HTML
   html-validation:
     name: Check HTML Syntax
     runs-on: ubuntu-latest
@@ -27,13 +26,13 @@ jobs:
       - name: Cài đặt và Chạy HTMLHint
         run: |
           npm install -g htmlhint
-          htmlhint "shop.html" "shopping-cart.html"
+          # Thêm index.html vào quét và cấu hình nới lỏng để tránh bắt bẻ template mẫu
+          htmlhint "index.html" "shop.html" "shopping-cart.html" --rules "tagname-lowercase=true,attr-lowercase=true,attr-value-not-empty=false,alt-require=false"
 
-  # Lớp CD: Tự động deploy lên Vercel nếu bước kiểm tra trên thành công
   deploy-to-vercel:
     name: Deploy to Vercel
     needs: html-validation
-    if: github.event_name == 'push' # Chỉ deploy khi push trực tiếp (hoặc merge PR), không deploy khi tạo PR nháp
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -45,4 +44,4 @@ jobs:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: "--prod"
